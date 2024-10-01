@@ -101,6 +101,9 @@ public class AccessTest {
         }
     }
 
+    final static Object lock = new Object();
+    static int staticInt = 40;
+
     /*
      * Validate final field
      */
@@ -117,7 +120,12 @@ public class AccessTest {
         public Void call() throws Exception {
             Members obj = isStatic ? null : new Members();
             try {
+                // Performing synchonization will pass the test
+                // synchronized(AccessTest.lock) {}
+
                 f.set(obj, 20);
+                //f.set(obj, staticInt); // Replacing '20' with 'staticInt' will pass the test
+
                 throw new RuntimeException("IllegalAccessException expected");
             } catch (IllegalAccessException e) {
                 // expected
@@ -125,6 +133,7 @@ public class AccessTest {
             return null;
         }
     }
+
 
     public static class PublicFinalField extends FinalField {
         public PublicFinalField() throws Exception {

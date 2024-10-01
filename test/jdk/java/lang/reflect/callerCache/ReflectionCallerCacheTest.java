@@ -27,10 +27,9 @@
  * @summary Test the caller class loader is not kept strongly reachable
  *         by reflection API
  * @library /test/lib/
- * @requires vm.compMode != "Xcomp"
  * @modules jdk.compiler
  * @build ReflectionCallerCacheTest Members jdk.test.lib.compiler.CompilerUtils
- * @run testng/othervm ReflectionCallerCacheTest
+ * @run testng/othervm -Xcomp ReflectionCallerCacheTest
  */
 
 import java.io.IOException;
@@ -103,11 +102,27 @@ public class ReflectionCallerCacheTest {
         }
     }
 
+    final static Object lock = new Object();
+    static Object dummyObj = new Object();
+
     @Test(dataProvider = "memberAccess")
     private void load(String classname) throws Exception {
         WeakReference<?> weakLoader = loadAndRunClass(classname);
 
         // Force garbage collection to trigger unloading of class loader
+
+        // gc + synchronization in loop instead of ForceGC will pass the test
+        // for (int i = 0; i < 20; i++) {
+        //    System.gc();
+        //    synchronized(ReflectionCallerCacheTest.lock) {
+        //        // Perform some action to ensure syncronization is not elided?
+        //        ReflectionCallerCacheTest.dummyObj = new Object();
+        //    }
+        // }
+        // if (!weakLoader.refersTo(null)) {
+        //     throw new RuntimeException("Class " + classname + " not unloaded!");
+        // }
+
         if (!ForceGC.wait(() -> weakLoader.refersTo(null))) {
             throw new RuntimeException("Class " + classname + " not unloaded!");
         }
